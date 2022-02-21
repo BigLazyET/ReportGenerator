@@ -37,6 +37,7 @@ namespace Palmmedia.ReportGenerator.Core
             var assemblyFilters = Array.Empty<string>();
             var classFilters = Array.Empty<string>();
             var fileFilters = Array.Empty<string>();
+            var methodFilters = Array.Empty<string>();
             string verbosityLevel = null;
             string title = null;
             string tag = null;
@@ -188,6 +189,23 @@ namespace Palmmedia.ReportGenerator.Core
                     .ToArray();
             }
 
+            if (namedArguments.TryGetValue(CommandLineArgumentNames.MethodFilters, out value))
+            {
+                methodFilters = value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+            else if (config.TryGetString(DotNetConfigSettingNames.MethodFilters, out value))
+            {
+                methodFilters = value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+            else
+            {
+                methodFilters = config
+                    .GetAll(DotNetConfigSettingNames.MethodFilter)
+                    .Select(x => x.RawValue)
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .ToArray();
+            }
+
             if (namedArguments.TryGetValue(CommandLineArgumentNames.Verbosity, out value))
             {
                 verbosityLevel = value;
@@ -225,6 +243,7 @@ namespace Palmmedia.ReportGenerator.Core
                 assemblyFilters,
                 classFilters,
                 fileFilters,
+                methodFilters,
                 verbosityLevel,
                 tag,
                 title);

@@ -51,8 +51,9 @@ namespace Palmmedia.ReportGenerator.Core.Parser
         /// <param name="assemblyFilter">The assembly filter.</param>
         /// <param name="classFilter">The class filter.</param>
         /// <param name="fileFilter">The file filter.</param>
-        internal OpenCoverParser(IFilter assemblyFilter, IFilter classFilter, IFilter fileFilter)
-            : base(assemblyFilter, classFilter, fileFilter)
+        /// <param name="methodFilter">The method filter.</param>
+        internal OpenCoverParser(IFilter assemblyFilter, IFilter classFilter, IFilter fileFilter, IFilter methodFilter)
+            : base(assemblyFilter, classFilter, fileFilter, methodFilter)
         {
         }
 

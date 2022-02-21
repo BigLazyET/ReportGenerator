@@ -61,6 +61,11 @@ namespace Palmmedia.ReportGenerator.Core.Parser
         private readonly IFilter fileFilter;
 
         /// <summary>
+        /// The method filter.
+        /// </summary>
+        private readonly IFilter methodFilter;
+
+        /// <summary>
         /// The current merge count.
         /// </summary>
         private int mergeCount;
@@ -94,7 +99,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser
         /// <param name="assemblyFilter">The assembly filter.</param>
         /// <param name="classFilter">The class filter.</param>
         /// <param name="fileFilter">The file filter.</param>
-        public CoverageReportParser(int numberOfReportsParsedInParallel, int numberOfReportsMergedInParallel, bool excludeTestProjects, IEnumerable<string> sourceDirectories, IFilter assemblyFilter, IFilter classFilter, IFilter fileFilter)
+        public CoverageReportParser(int numberOfReportsParsedInParallel, int numberOfReportsMergedInParallel, bool excludeTestProjects, IEnumerable<string> sourceDirectories, IFilter assemblyFilter, IFilter classFilter, IFilter fileFilter, IFilter methodFilter)
         {
             this.numberOfReportsParsedInParallel = Math.Max(1, numberOfReportsParsedInParallel);
             this.numberOfReportsMergedInParallel = Math.Max(1, numberOfReportsMergedInParallel);
@@ -103,6 +108,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser
             this.assemblyFilter = assemblyFilter ?? throw new ArgumentNullException(nameof(assemblyFilter));
             this.classFilter = classFilter ?? throw new ArgumentNullException(nameof(classFilter));
             this.fileFilter = fileFilter ?? throw new ArgumentNullException(nameof(fileFilter));
+            this.methodFilter = methodFilter ?? throw new ArgumentNullException(nameof(methodFilter));
         }
 
         /// <summary>
@@ -305,7 +311,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                     new OpenCoverReportPreprocessor().Execute(item);
 
                     Logger.DebugFormat(Resources.InitiatingParser, "OpenCover");
-                    yield return new OpenCoverParser(this.assemblyFilter, this.classFilter, this.fileFilter).Parse(item);
+                    yield return new OpenCoverParser(this.assemblyFilter, this.classFilter, this.fileFilter, this.methodFilter).Parse(item);
                 }
 
                 yield break;

@@ -130,7 +130,8 @@ namespace Palmmedia.ReportGenerator.Core
                     reportConfiguration.SourceDirectories,
                     new DefaultFilter(reportConfiguration.AssemblyFilters),
                     new DefaultFilter(reportConfiguration.ClassFilters),
-                    new DefaultFilter(reportConfiguration.FileFilters))
+                    new DefaultFilter(reportConfiguration.FileFilters),
+                    new DefaultFilter(reportConfiguration.MethodFilters))
                         .ParseFiles(reportConfiguration.ReportFiles);
 
                 Logger.DebugFormat(Resources.ReportParsingTook, stopWatch.ElapsedMilliseconds / 1000d);

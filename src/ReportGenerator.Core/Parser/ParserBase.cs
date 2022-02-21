@@ -42,6 +42,21 @@ namespace Palmmedia.ReportGenerator.Core.Parser
         }
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="ParserBase" /> class.
+        /// </summary>
+        /// <param name="assemblyFilter">The assembly filter.</param>
+        /// <param name="classFilter">The class filter.</param>
+        /// <param name="fileFilter">The file filter.</param>
+        /// <param name="methodFilter">The method filter.</param>
+        protected ParserBase(IFilter assemblyFilter, IFilter classFilter, IFilter fileFilter, IFilter methodFilter)
+        {
+            this.AssemblyFilter = assemblyFilter ?? throw new ArgumentNullException(nameof(assemblyFilter));
+            this.ClassFilter = classFilter ?? throw new ArgumentNullException(nameof(classFilter));
+            this.FileFilter = fileFilter ?? throw new ArgumentNullException(nameof(fileFilter));
+            this.MethodFilter = methodFilter ?? throw new ArgumentNullException(nameof(methodFilter));
+        }
+
+        /// <summary>
         /// Gets the assembly filter.
         /// </summary>
         protected IFilter AssemblyFilter { get; }
@@ -55,6 +70,11 @@ namespace Palmmedia.ReportGenerator.Core.Parser
         /// Gets the file filter.
         /// </summary>
         protected IFilter FileFilter { get; }
+
+        /// <summary>
+        /// Gets the method filter.
+        /// </summary>
+        protected IFilter MethodFilter { get; }
 
         /// <summary>
         /// Returns a <see cref="string"/> that represents this instance.

@@ -91,6 +91,16 @@
         public const string FileFilter = "filefilter";
 
         /// <summary>
+        /// The method filters.
+        /// </summary>
+        public const string MethodFilters = "methodfilters";
+
+        /// <summary>
+        /// The method filter.
+        /// </summary>
+        public const string MethodFilter = "methodfilter";
+
+        /// <summary>
         /// The verbosity.
         /// </summary>
         public const string Verbosity = "verbosity";

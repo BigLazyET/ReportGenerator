@@ -66,6 +66,11 @@ namespace Palmmedia.ReportGenerator.Core
         public const string FileFilters = "FILEFILTERS";
 
         /// <summary>
+        /// The method filters.
+        /// </summary>
+        public const string MethodFilters = "METHODFILTERS";
+
+        /// <summary>
         /// The verbosity.
         /// </summary>
         public const string Verbosity = "VERBOSITY";

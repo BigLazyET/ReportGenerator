@@ -54,6 +54,11 @@ namespace Palmmedia.ReportGenerator.Core.Reporting
         IReadOnlyCollection<string> FileFilters { get; }
 
         /// <summary>
+        /// Gets the method filters.
+        /// </summary>
+        IReadOnlyCollection<string> MethodFilters { get; }
+
+        /// <summary>
         /// Gets the verbosity level.
         /// </summary>
         VerbosityLevel VerbosityLevel { get; }
