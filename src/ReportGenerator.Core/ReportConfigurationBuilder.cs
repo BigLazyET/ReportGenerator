@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DotNetConfig;
+using Microsoft.Extensions.Configuration;
 using Palmmedia.ReportGenerator.Core.Logging;
 using Palmmedia.ReportGenerator.Core.Properties;
 
@@ -233,7 +235,7 @@ namespace Palmmedia.ReportGenerator.Core
                 tag = value;
             }
 
-            return new ReportConfiguration(
+            var reportConfiguration = new ReportConfiguration(
                 reportFilePatterns,
                 targetDirectory,
                 sourceDirectories,
@@ -247,6 +249,27 @@ namespace Palmmedia.ReportGenerator.Core
                 verbosityLevel,
                 tag,
                 title);
+
+            var configPath = string.Empty;
+            if (namedArguments.TryGetValue(CommandLineArgumentNames.ConfigPath, out value))
+            {
+                configPath = value;
+            }
+            else if (config.TryGetString(DotNetConfigSettingNames.ConfigPath, out value))
+            {
+                configPath = value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(configPath) && File.Exists(configPath))
+            {
+                var configuration = new ConfigurationBuilder().AddJsonFile(configPath).Build();
+                if (configuration != null)
+                {
+                    configuration.Bind(reportConfiguration);
+                }
+            }
+
+            return reportConfiguration;
         }
 
         /// <summary>

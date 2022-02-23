@@ -86,6 +86,11 @@ namespace Palmmedia.ReportGenerator.Core
         public const string Tag = "TAG";
 
         /// <summary>
+        /// The config path.
+        /// </summary>
+        public const string ConfigPath = "CONFIGPATH";
+
+        /// <summary>
         /// All valid command line parameter names.
         /// </summary>
         private static readonly HashSet<string> ValidNames = new HashSet<string>(

@@ -178,6 +178,11 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                 .Elements("Methods")
                 .Elements("Method")
                 .Where(m => m.Attribute("skippedDueTo") == null)
+                .Where(m =>
+                {
+                    var name = m.Element("Name").Value;
+                    return this.MethodFilter.IsElementIncludedInReport(name);
+                })
                 .ToArray();
 
             var fileIdsOfClassInSequencePoints = methods

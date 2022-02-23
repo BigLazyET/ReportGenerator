@@ -103,6 +103,14 @@ namespace Palmmedia.ReportGenerator.MSBuild
         public ITaskItem[] FileFilters { get; set; } = Array.Empty<ITaskItem>();
 
         /// <summary>
+        /// Gets or sets the method filters.
+        /// </summary>
+        /// <value>
+        /// The method filters.
+        /// </value>
+        public ITaskItem[] MethodFilters { get; set; } = Array.Empty<ITaskItem>();
+
+        /// <summary>
         /// Gets or sets the verbosity level.
         /// </summary>
         /// <value>
@@ -135,6 +143,7 @@ namespace Palmmedia.ReportGenerator.MSBuild
             var assemblyFilters = Array.Empty<string>();
             var classFilters = Array.Empty<string>();
             var fileFilters = Array.Empty<string>();
+            var methodFilters = Array.Empty<string>();
             string verbosityLevel = VerbosityLevel;
             string tag = Tag;
 
@@ -288,6 +297,23 @@ namespace Palmmedia.ReportGenerator.MSBuild
                     .ToArray();
             }
 
+            if (MethodFilters.Length > 0)
+            {
+                methodFilters = MethodFilters.Select(r => r.ItemSpec).ToArray();
+            }
+            else if (config.TryGetString(DotNetConfigSettingNames.MethodFilters, out value))
+            {
+                methodFilters = value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+            }
+            else
+            {
+                methodFilters = config
+                    .GetAll(DotNetConfigSettingNames.MethodFilter)
+                    .Select(x => x.RawValue)
+                    .Where(x => !string.IsNullOrEmpty(x))
+                    .ToArray();
+            }
+
             if (string.IsNullOrEmpty(verbosityLevel) &&
                 config.TryGetString(DotNetConfigSettingNames.Verbosity, out value))
             {
@@ -310,6 +336,7 @@ namespace Palmmedia.ReportGenerator.MSBuild
                 assemblyFilters,
                 classFilters,
                 fileFilters,
+                methodFilters,
                 verbosityLevel,
                 tag);
 

@@ -114,5 +114,10 @@
         /// The tag.
         /// </summary>
         public const string Tag = "tag";
+
+        /// <summary>
+        /// The config path.
+        /// </summary>
+        public const string ConfigPath = "configpath";
     }
 }
