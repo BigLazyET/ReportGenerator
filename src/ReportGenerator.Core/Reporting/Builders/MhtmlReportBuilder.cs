@@ -342,6 +342,8 @@ namespace Palmmedia.ReportGenerator.Core.Reporting.Builders
             /// Gets a value indicating whether the verbosity level was successfully parsed during initialization.
             /// </summary>
             public bool VerbosityLevelValid => this.reportConfiguration.VerbosityLevelValid;
+
+            public IReadOnlyCollection<string> MethodFilters => this.reportConfiguration.MethodFilters;
         }
     }
 }
