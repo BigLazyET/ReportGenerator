@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 namespace Palmmedia.ReportGenerator.Core.Parser.Filtering
@@ -88,7 +89,8 @@ namespace Palmmedia.ReportGenerator.Core.Parser.Filtering
         /// </summary>
         /// <param name="filter">The filter.</param>
         /// <returns>The regular expression.</returns>
-        private static Regex CreateFilterRegex(string filter)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected virtual Regex CreateFilterRegex(string filter)
         {
             filter = filter.Substring(1);
             filter = filter.Replace("*", "$$$*");

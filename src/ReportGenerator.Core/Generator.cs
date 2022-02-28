@@ -129,9 +129,9 @@ namespace Palmmedia.ReportGenerator.Core
                     settings.ExcludeTestProjects,
                     reportConfiguration.SourceDirectories,
                     new DefaultFilter(reportConfiguration.AssemblyFilters),
-                    new DefaultFilter(reportConfiguration.ClassFilters),
-                    new DefaultFilter(reportConfiguration.FileFilters),
-                    new DefaultFilter(reportConfiguration.MethodFilters))
+                    new ClassFilter(reportConfiguration.ClassFilters),
+                    new FileFilter(reportConfiguration.FileFilters),
+                    new MethodFilter(reportConfiguration.MethodFilters))
                         .ParseFiles(reportConfiguration.ReportFiles);
 
                 Logger.DebugFormat(Resources.ReportParsingTook, stopWatch.ElapsedMilliseconds / 1000d);

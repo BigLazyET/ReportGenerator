@@ -94,11 +94,33 @@ namespace Palmmedia.ReportGenerator.Core.Parser
         /// </summary>
         /// <param name="numberOfReportsParsedInParallel">The number reports that are parsed and processed in parallel.</param>
         /// <param name="numberOfReportsMergedInParallel">The number reports that are merged in parallel.</param>
+        /// <param name="sourceDirectories">The source directories.</param>
+        /// <param name="assemblyFilter">The assembly filter.</param>
+        /// <param name="classFilter">The class filter.</param>
+        /// <param name="fileFilter">The file filter.</param>
+        /// <param name="methodFilter">The method filter.</param>
+        public CoverageReportParser(int numberOfReportsParsedInParallel, int numberOfReportsMergedInParallel, IEnumerable<string> sourceDirectories, IFilter assemblyFilter, IFilter classFilter, IFilter fileFilter, IFilter methodFilter)
+        {
+            this.numberOfReportsParsedInParallel = Math.Max(1, numberOfReportsParsedInParallel);
+            this.numberOfReportsMergedInParallel = Math.Max(1, numberOfReportsMergedInParallel);
+            this.sourceDirectories = sourceDirectories ?? throw new ArgumentNullException(nameof(sourceDirectories));
+            this.assemblyFilter = assemblyFilter ?? throw new ArgumentNullException(nameof(assemblyFilter));
+            this.classFilter = classFilter ?? throw new ArgumentNullException(nameof(classFilter));
+            this.fileFilter = fileFilter ?? throw new ArgumentNullException(nameof(fileFilter));
+            this.methodFilter = methodFilter ?? throw new ArgumentNullException(nameof(methodFilter));
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CoverageReportParser" /> class.
+        /// </summary>
+        /// <param name="numberOfReportsParsedInParallel">The number reports that are parsed and processed in parallel.</param>
+        /// <param name="numberOfReportsMergedInParallel">The number reports that are merged in parallel.</param>
         /// <param name="excludeTestProjects">Indicates whether test projects should be included.</param>
         /// <param name="sourceDirectories">The source directories.</param>
         /// <param name="assemblyFilter">The assembly filter.</param>
         /// <param name="classFilter">The class filter.</param>
         /// <param name="fileFilter">The file filter.</param>
+        /// <param name="methodFilter">The method filter.</param>
         public CoverageReportParser(int numberOfReportsParsedInParallel, int numberOfReportsMergedInParallel, bool excludeTestProjects, IEnumerable<string> sourceDirectories, IFilter assemblyFilter, IFilter classFilter, IFilter fileFilter, IFilter methodFilter)
         {
             this.numberOfReportsParsedInParallel = Math.Max(1, numberOfReportsParsedInParallel);
