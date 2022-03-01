@@ -16,7 +16,8 @@ namespace Palmmedia.ReportGenerator.Core.Parser.Filtering
             filter = Regex.Escape(filter);
             filter = filter.Replace(@"\$\$\$\*", ".*");
 
-            return new Regex($"{filter}$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            var regex = new Regex($"{filter}$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            return regex;
         }
     }
 }

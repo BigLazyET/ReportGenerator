@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
 namespace Palmmedia.ReportGenerator.Core.Parser.Filtering
@@ -79,7 +80,12 @@ namespace Palmmedia.ReportGenerator.Core.Parser.Filtering
             }
             else
             {
-                return this.includeFilters.Any(f => f.IsMatch(name));
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    name = name.Replace("\\", "/");
+                }
+                var isInclude = this.includeFilters.Any(f => f.IsMatch(name));
+                return isInclude;
             }
         }
 
