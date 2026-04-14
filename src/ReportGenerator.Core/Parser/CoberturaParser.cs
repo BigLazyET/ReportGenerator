@@ -178,7 +178,13 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                     var fileClasses = classes
                         .Where(c => c.Attribute("filename").Value.Equals(file))
                         .ToArray();
-                    @class.AddFile(this.ProcessFile(fileClasses, @class, classNameParserResult.Name, file));
+
+                    // @class.AddFile(this.ProcessFile(fileClasses, @class, classNameParserResult.Name, file));
+                    var codeFile = this.ProcessFile(fileClasses, @class, classNameParserResult.Name, file);
+                    if (codeFile != null)
+                    {
+                        @class.AddFile(codeFile);
+                    }
                 }
 
                 assembly.AddClass(@class);
