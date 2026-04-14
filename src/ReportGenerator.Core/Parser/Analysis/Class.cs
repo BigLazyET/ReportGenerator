@@ -122,7 +122,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser.Analysis
         /// Gets the files.
         /// </summary>
         /// <value>The files.</value>
-        public IEnumerable<CodeFile> Files => this.files.OrderBy(f => f.Path);
+        public IEnumerable<CodeFile> Files => this.files.Where(f => f != null).OrderBy(f => f.Path);
 
         /// <summary>
         /// Gets the historic coverage information.

@@ -148,11 +148,11 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                 var name = element.Attribute("name").Value;
 
                 return name.Equals(classNameParserResult.Name)
-                    || (!this.RawMode
-                        && name.StartsWith(classNameParserResult.Name, StringComparison.Ordinal)
-                        && (name[classNameParserResult.Name.Length] == '$'
-                            || name[classNameParserResult.Name.Length] == '/'
-                            || name[classNameParserResult.Name.Length] == '.'));
+                       || (!this.RawMode
+                           && name.StartsWith(classNameParserResult.Name, StringComparison.Ordinal)
+                           && (name[classNameParserResult.Name.Length] == '$'
+                               || name[classNameParserResult.Name.Length] == '/'
+                               || name[classNameParserResult.Name.Length] == '.'));
             }
 
             var classes = allClasses
@@ -178,7 +178,13 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                     var fileClasses = classes
                         .Where(c => c.Attribute("filename").Value.Equals(file))
                         .ToArray();
-                    @class.AddFile(this.ProcessFile(fileClasses, @class, classNameParserResult.Name, file));
+
+                    // @class.AddFile(this.ProcessFile(fileClasses, @class, classNameParserResult.Name, file));
+                    var codeFile = this.ProcessFile(fileClasses, @class, classNameParserResult.Name, file);
+                    if (codeFile != null)
+                    {
+                        @class.AddFile(codeFile);
+                    }
                 }
 
                 assembly.AddClass(@class);
@@ -227,33 +233,127 @@ namespace Palmmedia.ReportGenerator.Core.Parser
 
             var branches = GetBranches(lines);
 
+            if (linesOfFile.Length == 0)
+            {
+                Logger.Info($"文件 {filePath} 中的 类 {className} 不存在行");
+                return null;
+            }
+
             int[] coverage = new int[] { };
             LineVisitStatus[] lineVisitStatus = new LineVisitStatus[] { };
 
-            if (linesOfFile.Length > 0)
+            // if (linesOfFile.Length > 0)
+            // {
+            //     coverage = new int[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
+            //     lineVisitStatus = new LineVisitStatus[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
+            //
+            //     for (int i = 0; i < coverage.Length; i++)
+            //     {
+            //         coverage[i] = -1;
+            //     }
+            //
+            //     foreach (var line in linesOfFile)
+            //     {
+            //         coverage[line.LineNumber] = line.Visits;
+            //
+            //         bool partiallyCovered = false;
+            //
+            //         if (branches.TryGetValue(line.LineNumber, out ICollection<Branch> branchesOfLine))
+            //         {
+            //             partiallyCovered = branchesOfLine.Any(b => b.BranchVisits == 0);
+            //         }
+            //
+            //         LineVisitStatus statusOfLine = line.Visits > 0 ? (partiallyCovered ? LineVisitStatus.PartiallyCovered : LineVisitStatus.Covered) : LineVisitStatus.NotCovered;
+            //         lineVisitStatus[line.LineNumber] = statusOfLine;
+            //     }
+            // }
+
+            // key: filePath
+            // value: changed line numbers
+            var getLineContents = CoverageLine.ChangeLines.TryGetValue(filePath, out List<int> changedLines);
+            if (!getLineContents || changedLines == null)
             {
-                coverage = new int[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
-                lineVisitStatus = new LineVisitStatus[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
+                Logger.Error($"文件 {filePath} 没有找到变更行");
+                return null;
+            }
 
-                for (int i = 0; i < coverage.Length; i++)
+            var classLines = linesOfFile.Select(line => line.LineNumber).Distinct(); // 有可能有重复值！所以我们做一下distinct
+            var filteredChangeLines = changedLines.Where(number => number > 0 && classLines.Contains(number));
+            var changedLineNumbers = filteredChangeLines as int[] ?? filteredChangeLines.ToArray();
+            if (!changedLineNumbers.Any())
+            {
+                // 当存在一个.cs文件中存在多个类的情况
+                // 最终显示的维度是单个类，所以我们要区分修改的行是否标记在具体的类中；解决输出多个类的bug
+                Logger.Warn($"文件 {filePath} 变更的行不存在于 类 {className}中, 忽略它");
+                return null;
+            }
+
+            var classLineNumbers = classLines as int[] ?? classLines.ToArray();
+            var minLineNumber = classLineNumbers.Min();
+            var maxLineNumber = classLineNumbers.Max();
+            Logger.Info(
+                $"文件{filePath} 变更的行 {string.Join(",", changedLineNumbers.Select(i => i.ToString()))} 且类 {className} 行是从 {minLineNumber} 到 {maxLineNumber}");
+
+            coverage = new int[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
+            lineVisitStatus =
+                new LineVisitStatus[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
+
+            for (int i = 0; i < coverage.Length; i++)
+            {
+                coverage[i] = -1;
+            }
+
+            var markedLines = new Dictionary<int, int>();
+            foreach (var line in linesOfFile)
+            {
+                if (!changedLineNumbers.Contains(line.LineNumber))
                 {
-                    coverage[i] = -1;
+                    coverage[line.LineNumber] = -1;
+                    lineVisitStatus[line.LineNumber] = LineVisitStatus.NotCoverable;
                 }
-
-                foreach (var line in linesOfFile)
+                else
                 {
-                    coverage[line.LineNumber] = line.Visits;
-
-                    bool partiallyCovered = false;
-
-                    if (branches.TryGetValue(line.LineNumber, out ICollection<Branch> branchesOfLine))
+                    if (markedLines.TryGetValue(line.LineNumber, out var visits))
                     {
-                        partiallyCovered = branchesOfLine.Any(b => b.BranchVisits == 0);
+                        markedLines[line.LineNumber] = line.Visits < 0 ? visits : visits + line.Visits;
                     }
-
-                    LineVisitStatus statusOfLine = line.Visits > 0 ? (partiallyCovered ? LineVisitStatus.PartiallyCovered : LineVisitStatus.Covered) : LineVisitStatus.NotCovered;
-                    lineVisitStatus[line.LineNumber] = statusOfLine;
+                    else
+                    {
+                        markedLines.Add(line.LineNumber, line.Visits < 0 ? 0 : line.Visits);
+                    }
                 }
+            }
+
+            foreach (var markedLine in markedLines)
+            {
+                // -1: Not coverable 0: Not visited >0: Number of visits
+                coverage[markedLine.Key] = markedLine.Value;
+
+                bool partiallyCovered = false;
+
+                if (branches.TryGetValue(markedLine.Key, out ICollection<Branch> branchesOfLine))
+                {
+                    partiallyCovered = branchesOfLine.Any(b => b.BranchVisits == 0);
+                }
+
+                LineVisitStatus statusOfLine = markedLine.Value > 0
+                    ? (partiallyCovered ? LineVisitStatus.PartiallyCovered : LineVisitStatus.Covered)
+                    : LineVisitStatus.NotCovered;
+                lineVisitStatus[markedLine.Key] = statusOfLine;
+            }
+
+            var marked = markedLines.GroupBy(m => m.Value)
+                .ToDictionary(m => m.Key, m => m.Select(l => l.Key));
+            foreach (var mark in marked)
+            {
+                Logger.Info(
+                    $"文件{filePath}中, The visits is {mark.Key} of line numbers are {string.Join(",", mark.Value)}");
+            }
+
+            if (changedLineNumbers.Any())
+            {
+                branches = branches.Where(b => changedLineNumbers.Contains(b.Key))
+                    .ToDictionary(kv => kv.Key, kv => kv.Value);
             }
 
             var codeFile = new CodeFile(filePath, coverage, lineVisitStatus, branches);

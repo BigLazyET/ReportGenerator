@@ -59,7 +59,7 @@ namespace Palmmedia.ReportGenerator.Core
                 return 0;
             }
 
-            return new Generator().GenerateReport(configuration) ? 0 : 1;
+            return new Generator().GenerateReport(configuration).Result ? 0 : 1;
         }
 
         /// <summary>

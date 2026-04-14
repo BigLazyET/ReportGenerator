@@ -56,7 +56,7 @@ namespace Palmmedia.ReportGenerator.Core.Reporting
         /// <param name="overallHistoricCoverages">All historic coverage elements.</param>
         /// <param name="executionTime">The execution time.</param>
         /// <param name="tag">The custom tag (e.g. build number).</param>
-        internal void CreateReport(bool addHistoricCoverage, List<HistoricCoverage> overallHistoricCoverages, DateTime executionTime, string tag)
+        internal SummaryResult CreateReport(bool addHistoricCoverage, List<HistoricCoverage> overallHistoricCoverages, DateTime executionTime, string tag)
         {
             int numberOfClasses = this.parserResult.Assemblies.SafeSum(a => a.Classes.Count());
 
@@ -128,6 +128,8 @@ namespace Palmmedia.ReportGenerator.Core.Reporting
                     }
                 }
             }
+
+            return summaryResult;
         }
     }
 }
