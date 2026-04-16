@@ -81,5 +81,32 @@ namespace Palmmedia.ReportGenerator.Core.Test.Parser.FileReading
             Assert.Null(error);
             Assert.Equal(expectedNumberOfLines, lines.Length);
         }
+
+        [Fact]
+        public void MissingOriginalPath_WithSourcePathMappingAnchor_MapsDirectlyToSourceDirectory()
+        {
+            string tempRoot = Path.Combine(Path.GetTempPath(), $"reportgenerator-anchor-{System.Guid.NewGuid():N}");
+            string sourceDirectory = Path.Combine(tempRoot, "runtime-branch", "qa");
+            string expectedFile = Path.Combine(sourceDirectory, "Samples", "SampleApi", "Program.cs");
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(expectedFile));
+                File.WriteAllText(expectedFile, "class Program { }");
+
+                var sut = new LocalFileReader(new[] { sourceDirectory }, new[] { "CoverageX" }, false);
+
+                string[] lines = sut.LoadFile(Path.Combine(Path.DirectorySeparatorChar.ToString(), "tmp", "work", "CoverageX", "Samples", "SampleApi", "Program.cs"), out string error);
+                Assert.Null(error);
+                Assert.Single(lines);
+            }
+            finally
+            {
+                if (Directory.Exists(tempRoot))
+                {
+                    Directory.Delete(tempRoot, recursive: true);
+                }
+            }
+        }
     }
 }

@@ -270,7 +270,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser
 
             // key: filePath
             // value: changed line numbers
-            var getLineContents = CoverageLine.ChangeLines.TryGetValue(filePath, out List<int> changedLines);
+            var getLineContents = CoverageLine.TryGetChangedLines(filePath, out List<int> changedLines);
             if (!getLineContents || changedLines == null)
             {
                 Logger.Error($"文件 {filePath} 没有找到变更行");

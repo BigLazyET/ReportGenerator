@@ -30,6 +30,11 @@ namespace Palmmedia.ReportGenerator.Core.Parser.FileReading
         private readonly IReadOnlyList<string> sourceDirectories;
 
         /// <summary>
+        /// Path segment anchors used for fast source path remapping before generic fallback matching.
+        /// </summary>
+        private readonly IReadOnlyList<string> sourcePathMappingAnchors;
+
+        /// <summary>
         /// Indicates whether empty trailing line in source files should be preserved.
         /// </summary>
         private readonly bool preserveTrailingEmptyLine;
@@ -59,8 +64,34 @@ namespace Palmmedia.ReportGenerator.Core.Parser.FileReading
         /// Initializes a new instance of the <see cref="LocalFileReader" /> class.
         /// </summary>
         public LocalFileReader()
-            : this(Enumerable.Empty<string>(), false)
+            : this(Enumerable.Empty<string>(), Enumerable.Empty<string>(), false)
         {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LocalFileReader" /> class.
+        /// </summary>
+        /// <param name="sourceDirectories">The source directories.</param>
+        /// <param name="sourcePathMappingAnchors">Path segment anchors used for fast source path remapping.</param>
+        /// <param name="preserveTrailingEmptyLine">Indicates whether empty trailing line in source files should be preserved.</param>
+        public LocalFileReader(IEnumerable<string> sourceDirectories, IEnumerable<string> sourcePathMappingAnchors, bool preserveTrailingEmptyLine)
+        {
+            if (sourceDirectories == null)
+            {
+                throw new ArgumentNullException(nameof(sourceDirectories));
+            }
+
+            if (sourcePathMappingAnchors == null)
+            {
+                throw new ArgumentNullException(nameof(sourcePathMappingAnchors));
+            }
+
+            this.sourceDirectories = sourceDirectories.ToList();
+            this.sourcePathMappingAnchors = sourcePathMappingAnchors
+                .Where(anchor => !string.IsNullOrWhiteSpace(anchor))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            this.preserveTrailingEmptyLine = preserveTrailingEmptyLine;
         }
 
         /// <summary>
@@ -69,14 +100,8 @@ namespace Palmmedia.ReportGenerator.Core.Parser.FileReading
         /// <param name="sourceDirectories">The source directories.</param>
         /// <param name="preserveTrailingEmptyLine">Indicates whether empty trailing line in source files should be preserved.</param>
         public LocalFileReader(IEnumerable<string> sourceDirectories, bool preserveTrailingEmptyLine)
+            : this(sourceDirectories, Enumerable.Empty<string>(), preserveTrailingEmptyLine)
         {
-            if (sourceDirectories == null)
-            {
-                throw new ArgumentNullException(nameof(sourceDirectories));
-            }
-
-            this.sourceDirectories = sourceDirectories.ToList();
-            this.preserveTrailingEmptyLine = preserveTrailingEmptyLine;
         }
 
         /// <summary>
@@ -127,20 +152,26 @@ namespace Palmmedia.ReportGenerator.Core.Parser.FileReading
 
                 if (this.sourceDirectories.Count == 0)
                 {
-                    return MapPath(path, DeterministicSourceDirectories);
+                    return this.MapPath(path, DeterministicSourceDirectories, this.sourcePathMappingAnchors);
                 }
             }
 
             if (this.sourceDirectories.Count > 0)
             {
-                return MapPath(path, this.sourceDirectories);
+                return this.MapPath(path, this.sourceDirectories, this.sourcePathMappingAnchors);
             }
 
             return path;
         }
 
-        private static string MapPath(string path, IEnumerable<string> directories)
+        private string MapPath(string path, IEnumerable<string> directories, IReadOnlyCollection<string> sourcePathMappingAnchors)
         {
+            var fastMappedPath = this.TryMapPathWithAnchors(path, directories, sourcePathMappingAnchors);
+            if (fastMappedPath != null)
+            {
+                return fastMappedPath;
+            }
+
             /*
              * Search in source dirctories
              *
@@ -173,6 +204,45 @@ namespace Palmmedia.ReportGenerator.Core.Parser.FileReading
             return path;
         }
 
+        private string TryMapPathWithAnchors(string path, IEnumerable<string> directories, IReadOnlyCollection<string> sourcePathMappingAnchors)
+        {
+            if (sourcePathMappingAnchors == null || sourcePathMappingAnchors.Count == 0)
+            {
+                return null;
+            }
+
+            string[] parts = path.Split(new[] { '/', '\\' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0)
+            {
+                return null;
+            }
+
+            foreach (var anchor in sourcePathMappingAnchors)
+            {
+                int anchorIndex = Array.FindLastIndex(parts, part => string.Equals(part, anchor, StringComparison.OrdinalIgnoreCase));
+                if (anchorIndex < 0 || anchorIndex >= parts.Length - 1)
+                {
+                    continue;
+                }
+
+                foreach (var sourceDirectory in directories)
+                {
+                    string combinedPath = sourceDirectory;
+                    for (int i = anchorIndex + 1; i < parts.Length; i++)
+                    {
+                        combinedPath = Path.Combine(combinedPath, parts[i]);
+                    }
+
+                    if (File.Exists(combinedPath))
+                    {
+                        return combinedPath;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>
         /// Reads all lines of a file, preserving a trailing empty line if present.
         /// </summary>
@@ -196,7 +266,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser.FileReading
                 // Use preserveTrailingEmptyLine option here to stick to the default behavior
                 if (this.preserveTrailingEmptyLine
                     && lines.Count > 0
-                    && FileEndsWithNewline(path))
+                    && this.FileEndsWithNewline(path))
                 {
                     lines.Add(string.Empty);
                 }
@@ -210,11 +280,15 @@ namespace Palmmedia.ReportGenerator.Core.Parser.FileReading
         /// </summary>
         /// <param name="path">The path of the file.</param>
         /// <returns>True if the file ends with a newline character, otherwise false.</returns>
-        private static bool FileEndsWithNewline(string path)
+        private bool FileEndsWithNewline(string path)
         {
             using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
-                if (fs.Length == 0) return false;
+                if (fs.Length == 0)
+                {
+                    return false;
+                }
+
                 fs.Seek(-1, SeekOrigin.End);
                 int lastByte = fs.ReadByte();
                 return lastByte == '\n' || lastByte == '\r';

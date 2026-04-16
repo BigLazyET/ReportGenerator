@@ -94,6 +94,8 @@ namespace Palmmedia.ReportGenerator.Core.Test.Reporting
 
             public IReadOnlyCollection<string> SourceDirectories { get; set; }
 
+            public IReadOnlyCollection<string> SourcePathMappingAnchors { get; set; }
+
             public IReadOnlyCollection<string> AssemblyFilters { get; set; }
 
             public IReadOnlyCollection<string> ClassFilters { get; set; }

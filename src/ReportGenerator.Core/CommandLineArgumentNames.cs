@@ -26,6 +26,11 @@ namespace Palmmedia.ReportGenerator.Core
         public const string SourceDirectories = "SOURCEDIRS";
 
         /// <summary>
+        /// The path segment anchors used for fast source path remapping.
+        /// </summary>
+        public const string SourcePathMappingAnchors = "SOURCEPATHMAPPINGANCHORS";
+
+        /// <summary>
         /// The history directory.
         /// </summary>
         public const string HistoryDirectory = "HISTORYDIR";

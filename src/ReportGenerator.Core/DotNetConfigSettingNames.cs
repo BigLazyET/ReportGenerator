@@ -36,6 +36,11 @@
         public const string SourceDirectory = "sourcedir";
 
         /// <summary>
+        /// The path segment anchors used for fast source path remapping.
+        /// </summary>
+        public const string SourcePathMappingAnchors = "sourcepathmappinganchors";
+
+        /// <summary>
         /// The history directory.
         /// </summary>
         public const string HistoryDirectory = "historydir";

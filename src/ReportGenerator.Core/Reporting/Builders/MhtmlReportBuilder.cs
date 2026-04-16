@@ -256,6 +256,11 @@ namespace Palmmedia.ReportGenerator.Core.Reporting.Builders
             public IReadOnlyCollection<string> SourceDirectories => this.reportConfiguration.SourceDirectories;
 
             /// <summary>
+            /// Gets path segment anchors used for fast source path remapping before generic fallback matching.
+            /// </summary>
+            public IReadOnlyCollection<string> SourcePathMappingAnchors => this.reportConfiguration.SourcePathMappingAnchors;
+
+            /// <summary>
             /// Gets the history directory.
             /// </summary>
             public string HistoryDirectory => this.reportConfiguration.TargetDirectory;

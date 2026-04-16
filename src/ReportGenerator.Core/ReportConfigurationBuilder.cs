@@ -37,6 +37,7 @@ namespace Palmmedia.ReportGenerator.Core
             var reportFilePatterns = Array.Empty<string>();
             var targetDirectory = string.Empty;
             var sourceDirectories = Array.Empty<string>();
+            var sourcePathMappingAnchors = Array.Empty<string>();
             string historyDirectory = null;
             var reportTypes = Array.Empty<string>();
             var plugins = Array.Empty<string>();
@@ -93,6 +94,15 @@ namespace Palmmedia.ReportGenerator.Core
                     .Select(x => x.RawValue)
                     .Where(x => !string.IsNullOrEmpty(x))
                     .ToArray();
+            }
+
+            if (namedArguments.TryGetValue(CommandLineArgumentNames.SourcePathMappingAnchors, out value))
+            {
+                sourcePathMappingAnchors = value.Split(ArgumentSeparators, StringSplitOptions.RemoveEmptyEntries);
+            }
+            else if (config.TryGetString(DotNetConfigSettingNames.SourcePathMappingAnchors, out value))
+            {
+                sourcePathMappingAnchors = value.Split(ArgumentSeparators, StringSplitOptions.RemoveEmptyEntries);
             }
 
             if (namedArguments.TryGetValue(CommandLineArgumentNames.HistoryDirectory, out value))
@@ -273,7 +283,7 @@ namespace Palmmedia.ReportGenerator.Core
                 license = licenseFromEnvironment;
             }
 
-            return new ReportConfiguration(
+            var reportConfiguration = new ReportConfiguration(
                 reportFilePatterns,
                 targetDirectory,
                 sourceDirectories,
@@ -289,6 +299,9 @@ namespace Palmmedia.ReportGenerator.Core
                 tag,
                 title,
                 license);
+
+            reportConfiguration.SourcePathMappingAnchors = sourcePathMappingAnchors;
+            return reportConfiguration;
         }
 
         /// <summary>
