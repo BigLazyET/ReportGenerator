@@ -32,7 +32,7 @@ namespace Palmmedia.ReportGenerator.Core
         /// Generates a report using given configuration.
         /// </summary>
         /// <param name="reportConfiguration">The report configuration.</param>
-        /// <returns><c>true</c> if report was generated successfully; otherwise <c>false</c>.</returns>
+        /// <returns>The success flag and generated summary, or a null summary on failure.</returns>
         public (bool Result, SummaryResult Summary) GenerateReport(IReportConfiguration reportConfiguration)
         {
             if (reportConfiguration == null)
@@ -87,7 +87,7 @@ namespace Palmmedia.ReportGenerator.Core
         /// <param name="reportConfiguration">The report configuration.</param>
         /// <param name="settings">The settings.</param>
         /// <param name="riskHotspotsAnalysisThresholds">The risk hotspots analysis thresholds.</param>
-        /// <returns><c>true</c> if report was generated successfully; otherwise <c>false</c>.</returns>
+        /// <returns>The success flag and generated summary, or a null summary on failure.</returns>
         public (bool Result, SummaryResult Summary) GenerateReport(
             IReportConfiguration reportConfiguration,
             Settings settings,
@@ -107,7 +107,7 @@ namespace Palmmedia.ReportGenerator.Core
         /// <param name="settings">The settings.</param>
         /// <param name="minimumCoverageThresholds">The minimum coverage thresholds.</param>
         /// <param name="riskHotspotsAnalysisThresholds">The risk hotspots analysis thresholds.</param>
-        /// <returns><c>true</c> if report was generated successfully; otherwise <c>false</c>.</returns>
+        /// <returns>The success flag and generated summary, or a null summary on failure.</returns>
         public (bool Result, SummaryResult Summary) GenerateReport(
             IReportConfiguration reportConfiguration,
             Settings settings,

@@ -1,3 +1,5 @@
+> CoverageX fork: see [FORK.md](FORK.md) for incremental Cobertura behavior and differences from the upstream documentation below.
+
 <h1 align="center">
 
 <img src="https://raw.githubusercontent.com/danielpalme/ReportGenerator/main/docs/resources/logo.svg" alt="ReportGenerator" width="200"/>

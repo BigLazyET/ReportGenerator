@@ -179,7 +179,6 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                         .Where(c => c.Attribute("filename").Value.Equals(file))
                         .ToArray();
 
-                    // @class.AddFile(this.ProcessFile(fileClasses, @class, classNameParserResult.Name, file));
                     var codeFile = this.ProcessFile(fileClasses, @class, classNameParserResult.Name, file);
                     if (codeFile != null)
                     {
@@ -242,35 +241,6 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                 return null;
             }
 
-            int[] coverage = new int[] { };
-            LineVisitStatus[] lineVisitStatus = new LineVisitStatus[] { };
-
-            // if (linesOfFile.Length > 0)
-            // {
-            //     coverage = new int[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
-            //     lineVisitStatus = new LineVisitStatus[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
-            //
-            //     for (int i = 0; i < coverage.Length; i++)
-            //     {
-            //         coverage[i] = -1;
-            //     }
-            //
-            //     foreach (var line in linesOfFile)
-            //     {
-            //         coverage[line.LineNumber] = line.Visits;
-            //
-            //         bool partiallyCovered = false;
-            //
-            //         if (branches.TryGetValue(line.LineNumber, out ICollection<Branch> branchesOfLine))
-            //         {
-            //             partiallyCovered = branchesOfLine.Any(b => b.BranchVisits == 0);
-            //         }
-            //
-            //         LineVisitStatus statusOfLine = line.Visits > 0 ? (partiallyCovered ? LineVisitStatus.PartiallyCovered : LineVisitStatus.Covered) : LineVisitStatus.NotCovered;
-            //         lineVisitStatus[line.LineNumber] = statusOfLine;
-            //     }
-            // }
-
             // key: filePath
             // value: changed line numbers
             var getLineContents = CoverageLine.TryGetChangedLines(filePath, out List<int> changedLines);
@@ -298,8 +268,8 @@ namespace Palmmedia.ReportGenerator.Core.Parser
             Logger.Info(
                 $"文件{filePath} 变更的行 {string.Join(",", changedLineNumbers.Select(i => i.ToString()))} 且类 {className} 行是从 {minLineNumber} 到 {maxLineNumber}");
 
-            coverage = new int[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
-            lineVisitStatus =
+            int[] coverage = new int[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
+            LineVisitStatus[] lineVisitStatus =
                 new LineVisitStatus[linesOfFile[linesOfFile.LongLength - 1].LineNumber + 1];
 
             for (int i = 0; i < coverage.Length; i++)
