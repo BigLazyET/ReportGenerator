@@ -187,7 +187,10 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                     }
                 }
 
-                assembly.AddClass(@class);
+                if (filteredFiles.Length == 0 || @class.Files.Any())
+                {
+                    assembly.AddClass(@class);
+                }
             }
         }
 

@@ -114,9 +114,9 @@ namespace Palmmedia.ReportGenerator.Core.Test.Parser
         {
             var root = this.CreateReport();
             CoverageLine.ChangeLines.Clear();
-            Assert.Empty(this.Parse(root.ToString()).Assemblies.Single().Classes.Single().Files);
+            Assert.Empty(this.Parse(root.ToString()).Assemblies.Single().Classes);
             CoverageLine.ChangeLines[Path.Combine(this.directory, "Sample.cs")] = new List<int> { -1, 0, 100 };
-            Assert.Empty(this.Parse(root.ToString()).Assemblies.Single().Classes.Single().Files);
+            Assert.Empty(this.Parse(root.ToString()).Assemblies.Single().Classes);
         }
 
         [Fact]
@@ -131,9 +131,22 @@ namespace Palmmedia.ReportGenerator.Core.Test.Parser
             nested.SetAttributeValue("name", "A/Nested");
             classes.Add(nested);
             var result = this.Parse(root.ToString());
-            Assert.Equal(2, result.Assemblies.Single().Classes.Count());
-            Assert.Empty(result.Assemblies.Single().Classes.Single(c => c.Name == "Other").Files);
-            Assert.Equal(10, result.Assemblies.Single().Classes.Single(c => c.Name == "A").Files.Single().LineCoverage[2]);
+            var selectedClass = Assert.Single(result.Assemblies.Single().Classes);
+            Assert.Equal("A", selectedClass.Name);
+            Assert.Equal(10, selectedClass.Files.Single().LineCoverage[2]);
+        }
+
+        [Fact]
+        public void UncoveredChangedClass_RemainsInReport()
+        {
+            var root = this.CreateReport();
+            CoverageLine.ChangeLines[Path.Combine(this.directory, "Sample.cs")] = new List<int> { 5 };
+
+            var selectedClass = Assert.Single(this.Parse(root.ToString()).Assemblies.Single().Classes);
+
+            Assert.Equal(0, selectedClass.CoveredLines);
+            Assert.Equal(1, selectedClass.CoverableLines);
+            Assert.Equal(0, selectedClass.Files.Single().LineCoverage[5]);
         }
 
         private XElement CreateReport()
