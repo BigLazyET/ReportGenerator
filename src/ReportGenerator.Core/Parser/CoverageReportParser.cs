@@ -370,6 +370,114 @@ namespace Palmmedia.ReportGenerator.Core.Parser
         }
 
         /// <summary>
+        /// Parses coverage elements using the original format precedence and preprocessing.
+        /// </summary>
+        /// <param name="elements">The coverage elements.</param>
+        /// <returns>The parser results.</returns>
+        private IEnumerable<ParserResult> ParseCoverageElements(IEnumerable<XElement> elements)
+        {
+            foreach (var item in elements)
+            {
+                if (item.Attribute("profilerVersion") != null)
+                {
+                    Logger.DebugFormat(Resources.InitiatingParser, "NCover");
+                    yield return new NCoverParser(this.assemblyFilter, this.classFilter, this.fileFilter).Parse(item);
+                }
+                else if (item.Attribute("clover") != null || item.Attribute("generated") != null)
+                {
+                    Logger.Debug(Resources.PreprocessingReport);
+                    new CloverReportPreprocessor(this.sourceDirectories, this.defaultAssemblyName).Execute(item);
+
+                    Logger.DebugFormat(Resources.InitiatingParser, "Clover");
+                    var result = new CloverParser(this.assemblyFilter, this.classFilter, this.fileFilter, this.excludeTestProjects).Parse(item);
+
+                    foreach (var sourceDirectory in this.sourceDirectories)
+                    {
+                        result.AddSourceDirectory(sourceDirectory);
+                    }
+
+                    yield return result;
+                }
+                else if (item.Attribute("ctcreportVersion") != null)
+                {
+                    if (this.reportContext != null
+                        && this.reportContext.ReportConfiguration.License.DetermineLicenseType() != LicenseType.Pro)
+                    {
+                        Logger.Warn(Resources.CtcReportProVersion);
+                    }
+                    else
+                    {
+                        Logger.DebugFormat(Resources.InitiatingParser, "Testwell CTC");
+                        yield return new CtcParser(this.assemblyFilter, this.classFilter, this.fileFilter).Parse(item);
+                    }
+                }
+                else if (item.Attributes().Count() > 1
+                    || item.Elements("packages").Any())
+                {
+                    Logger.Debug(Resources.PreprocessingReport);
+                    new CoberturaReportPreprocessor().Execute(item);
+
+                    Logger.DebugFormat(Resources.InitiatingParser, "Cobertura");
+                    yield return new CoberturaParser(this.assemblyFilter, this.classFilter, this.fileFilter)
+                    {
+                        RawMode = !this.rawModeProhibited && this.reportContext?.Settings.RawMode == true
+                    }.Parse(item);
+                }
+                else
+                {
+                    Logger.DebugFormat(Resources.InitiatingParser, "mprof");
+                    yield return new MProfParser(this.assemblyFilter, this.classFilter, this.fileFilter).Parse(item);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reads a complete ordinary root Cobertura report without the format ladder's repeated scans.
+        /// </summary>
+        /// <param name="filePath">The report path.</param>
+        /// <returns>The root, or null when the original format ladder must decide.</returns>
+        private XElement TryReadRootCobertura(string filePath)
+        {
+            try
+            {
+                var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, XmlResolver = null };
+                using (var reader = XmlReader.Create(filePath, settings))
+                {
+                    if (reader.MoveToContent() != XmlNodeType.Element || reader.Name != "coverage"
+                        || reader.GetAttribute("profilerVersion") != null
+                        || reader.GetAttribute("clover") != null
+                        || reader.GetAttribute("generated") != null
+                        || reader.GetAttribute("ctcreportVersion") != null)
+                    {
+                        return null;
+                    }
+
+                    var root = (XElement)XNode.ReadFrom(reader);
+                    while (reader.Read())
+                    {
+                        // Validate through EOF, including content after the root element.
+                    }
+
+                    if (root.Descendants().Any(element =>
+                        element.Name.LocalName == "PartCoverReport"
+                        || element.Name.LocalName == "CoverageSession"
+                        || (element.Name.LocalName == "Root" && element.Attribute("ReportType") != null)
+                        || (element.Name.LocalName == "report" && element.Attribute("name") != null)))
+                    {
+                        return null;
+                    }
+
+                    return root.Attributes().Count() > 1 || root.Elements("packages").Any() ? root : null;
+                }
+            }
+            catch (XmlException)
+            {
+                // Let the ladder retain early unsupported-format errors even with malformed tails.
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Tries to initiate the correct parsers for the given XML report. The result is merged into the given result.
         /// The report may contain several reports. For every report an extra parser is initiated.
         /// </summary>
@@ -377,6 +485,17 @@ namespace Palmmedia.ReportGenerator.Core.Parser
         /// <returns>The parser result.</returns>
         private IEnumerable<ParserResult> ParseXmlFile(string filePath)
         {
+            var rootCobertura = this.TryReadRootCobertura(filePath);
+            if (rootCobertura != null)
+            {
+                foreach (var result in this.ParseCoverageElements(new[] { rootCobertura }))
+                {
+                    yield return result;
+                }
+
+                yield break;
+            }
+
             if (this.GetXElements(filePath, "PartCoverReport").Any())
             {
                 throw new UnsupportedParserException(Resources.ErrorPartCover);
@@ -444,58 +563,9 @@ namespace Palmmedia.ReportGenerator.Core.Parser
 
             if (elements.Length > 0)
             {
-                foreach (var item in elements)
+                foreach (var result in this.ParseCoverageElements(elements))
                 {
-                    if (item.Attribute("profilerVersion") != null)
-                    {
-                        Logger.DebugFormat(Resources.InitiatingParser, "NCover");
-                        yield return new NCoverParser(this.assemblyFilter, this.classFilter, this.fileFilter).Parse(item);
-                    }
-                    else if (item.Attribute("clover") != null || item.Attribute("generated") != null)
-                    {
-                        Logger.Debug(Resources.PreprocessingReport);
-                        new CloverReportPreprocessor(this.sourceDirectories, this.defaultAssemblyName).Execute(item);
-
-                        Logger.DebugFormat(Resources.InitiatingParser, "Clover");
-                        var result = new CloverParser(this.assemblyFilter, this.classFilter, this.fileFilter, this.excludeTestProjects).Parse(item);
-
-                        foreach (var sourceDirectory in this.sourceDirectories)
-                        {
-                            result.AddSourceDirectory(sourceDirectory);
-                        }
-
-                        yield return result;
-                    }
-                    else if (item.Attribute("ctcreportVersion") != null)
-                    {
-                        if (this.reportContext != null
-                            && this.reportContext.ReportConfiguration.License.DetermineLicenseType() != LicenseType.Pro)
-                        {
-                            Logger.Warn(Resources.CtcReportProVersion);
-                        }
-                        else
-                        {
-                            Logger.DebugFormat(Resources.InitiatingParser, "Testwell CTC");
-                            yield return new CtcParser(this.assemblyFilter, this.classFilter, this.fileFilter).Parse(item);
-                        }
-                    }
-                    else if (item.Attributes().Count() > 1
-                        || item.Elements("packages").Any())
-                    {
-                        Logger.Debug(Resources.PreprocessingReport);
-                        new CoberturaReportPreprocessor().Execute(item);
-
-                        Logger.DebugFormat(Resources.InitiatingParser, "Cobertura");
-                        yield return new CoberturaParser(this.assemblyFilter, this.classFilter, this.fileFilter)
-                        {
-                            RawMode = !this.rawModeProhibited && this.reportContext?.Settings.RawMode == true
-                        }.Parse(item);
-                    }
-                    else
-                    {
-                        Logger.DebugFormat(Resources.InitiatingParser, "mprof");
-                        yield return new MProfParser(this.assemblyFilter, this.classFilter, this.fileFilter).Parse(item);
-                    }
+                    yield return result;
                 }
 
                 yield break;

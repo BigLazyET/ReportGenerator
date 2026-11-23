@@ -415,7 +415,7 @@ namespace Palmmedia.ReportGenerator.MSBuild
                 title,
                 license);
 
-            return new Generator().GenerateReport(configuration);
+            return new Generator().GenerateReport(configuration).Result;
         }
     }
 }

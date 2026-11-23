@@ -277,7 +277,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                 return null;
             }
 
-            var classLines = linesOfFile.Select(line => line.LineNumber).Distinct(); // 有可能有重复值！所以我们做一下distinct
+            var classLines = new HashSet<int>(linesOfFile.Select(line => line.LineNumber));
             var filteredChangeLines = changedLines.Where(number => number > 0 && classLines.Contains(number));
             var changedLineNumbers = filteredChangeLines as int[] ?? filteredChangeLines.ToArray();
             if (!changedLineNumbers.Any())
@@ -288,7 +288,8 @@ namespace Palmmedia.ReportGenerator.Core.Parser
                 return null;
             }
 
-            var classLineNumbers = classLines as int[] ?? classLines.ToArray();
+            var changedLineSet = new HashSet<int>(changedLineNumbers);
+            var classLineNumbers = classLines.ToArray();
             var minLineNumber = classLineNumbers.Min();
             var maxLineNumber = classLineNumbers.Max();
             Logger.Info(
@@ -306,7 +307,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser
             var markedLines = new Dictionary<int, int>();
             foreach (var line in linesOfFile)
             {
-                if (!changedLineNumbers.Contains(line.LineNumber))
+                if (!changedLineSet.Contains(line.LineNumber))
                 {
                     coverage[line.LineNumber] = -1;
                     lineVisitStatus[line.LineNumber] = LineVisitStatus.NotCoverable;
@@ -352,7 +353,7 @@ namespace Palmmedia.ReportGenerator.Core.Parser
 
             if (changedLineNumbers.Any())
             {
-                branches = branches.Where(b => changedLineNumbers.Contains(b.Key))
+                branches = branches.Where(b => changedLineSet.Contains(b.Key))
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
             }
 

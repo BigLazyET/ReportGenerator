@@ -131,7 +131,7 @@ namespace Palmmedia.ReportGenerator.Core.Test.Parser
         [Fact]
         public void MethodMetricsTest()
         {
-            var metrics = this.javaParserResult.Assemblies.Single(a => a.Name == "test").Classes.Single(c => c.Name == "test.TestClass").Files.Single(f => f.Path == "C:\\temp\\test\\TestClass.java").MethodMetrics.ToArray();
+            var metrics = this.javaParserResult.Assemblies.Single(a => a.Name == "test").Classes.Single(c => c.Name == "test.TestClass").Files.Single(f => NormalizePath(f.Path) == NormalizePath("C:\\temp\\test\\TestClass.java")).MethodMetrics.ToArray();
 
             Assert.Equal(4, metrics.Count());
 
@@ -170,7 +170,7 @@ namespace Palmmedia.ReportGenerator.Core.Test.Parser
             var methodMetrics = csharpParserResult
                 .Assemblies.Single(a => a.Name == assemblyName)
                 .Classes.Single(c => c.Name == className)
-                .Files.Single(f => f.Path == filePath)
+                .Files.Single(f => NormalizePath(f.Path) == NormalizePath(filePath))
                 .MethodMetrics.ToArray();
 
             Assert.Equal(expectedMethodMetrics, methodMetrics.Length);
@@ -211,7 +211,7 @@ namespace Palmmedia.ReportGenerator.Core.Test.Parser
             var methodMetrics = swiftParserResult
                 .Assemblies.Single(a => a.Name == assemblyName)
                 .Classes.Single(c => c.Name == className)
-                .Files.Single(f => f.Path == filePath)
+                .Files.Single(f => NormalizePath(f.Path) == NormalizePath(filePath))
                 .MethodMetrics.ToArray();
 
             Assert.Equal(expectedMethodMetrics, methodMetrics.Length);
@@ -251,15 +251,17 @@ namespace Palmmedia.ReportGenerator.Core.Test.Parser
             Assert.Equal(4, codeElements.Count());
         }
 
+        private static string NormalizePath(string path) => path.Replace('\\', '/');
+
         private static CodeFile GetFile(IEnumerable<Assembly> assemblies, string className, string fileName) => assemblies
                 .Single(a => a.Name == "test").Classes
                 .Single(c => c.Name == className).Files
-                .Single(f => f.Path == fileName);
+                .Single(f => NormalizePath(f.Path) == NormalizePath(fileName));
 
         private static FileAnalysis GetFileAnalysis(IEnumerable<Assembly> assemblies, string className, string fileName) => assemblies
                 .Single(a => a.Name == "test").Classes
                 .Single(c => c.Name == className).Files
-                .Single(f => f.Path == fileName)
+                .Single(f => NormalizePath(f.Path) == NormalizePath(fileName))
                 .AnalyzeFile(new CachingFileReader(new LocalFileReader(), 0, null));
 
         private static ParserResult ParseReport(string filePath)
@@ -269,7 +271,25 @@ namespace Palmmedia.ReportGenerator.Core.Test.Parser
 
             var report = XDocument.Load(filePath);
             new CoberturaReportPreprocessor().Execute(report);
-            return new CoberturaParser(filter, filter, filter).Parse(report.Root);
+            var previousChanges = CoverageLine.ChangeLines;
+            try
+            {
+                // These fixtures explicitly select every reported line; production still requires a change map.
+                CoverageLine.ChangeLines = report.Descendants("class")
+                    .GroupBy(c => c.Attribute("filename").Value)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group.Descendants("line")
+                            .Select(line => int.Parse(line.Attribute("number").Value, System.Globalization.CultureInfo.InvariantCulture))
+                            .Where(number => number > 0)
+                            .Distinct()
+                            .ToList());
+                return new CoberturaParser(filter, filter, filter).Parse(report.Root);
+            }
+            finally
+            {
+                CoverageLine.ChangeLines = previousChanges;
+            }
         }
     }
 }
