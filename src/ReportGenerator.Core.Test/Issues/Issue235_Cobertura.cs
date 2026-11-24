@@ -1,12 +1,15 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
 using NSubstitute;
+using Palmmedia.ReportGenerator.Core;
 using Palmmedia.ReportGenerator.Core.Parser;
 using Palmmedia.ReportGenerator.Core.Parser.Filtering;
 using Xunit;
 
 namespace Palmmedia.ReportGenerator.Core.Test.Issues
 {
+    [Collection("FileManager")]
     public class Issue235_Cobertura
     {
         private const string Report = @"<?xml version=""1.0"" encoding=""utf-8""?>
@@ -35,9 +38,21 @@ namespace Palmmedia.ReportGenerator.Core.Test.Issues
 
             var report = XDocument.Parse(Report);
 
-            var parserResult = new CoberturaParser(filter, filter, filter).Parse(report.Root);
+            var previousChanges = CoverageLine.ChangeLines;
+            try
+            {
+                CoverageLine.ChangeLines = new Dictionary<string, List<int>>
+                {
+                    [report.Descendants("class").Single().Attribute("filename").Value] = new List<int> { 20 }
+                };
+                var parserResult = new CoberturaParser(filter, filter, filter).Parse(report.Root);
 
-            Assert.Equal("OutwardPaymentDocumentProcessing.HttpStart", parserResult.Assemblies.First().Classes.First().Name);
+                Assert.Equal("OutwardPaymentDocumentProcessing.HttpStart", parserResult.Assemblies.First().Classes.First().Name);
+            }
+            finally
+            {
+                CoverageLine.ChangeLines = previousChanges;
+            }
         }
     }
 }
