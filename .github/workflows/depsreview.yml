@@ -1,5 +1,16 @@
 name: 'Dependency Review'
-on: [pull_request]
+on:
+  workflow_dispatch:
+    inputs:
+      base_ref:
+        description: Base Git ref for dependency comparison
+        required: true
+        default: main
+        type: string
+      head_ref:
+        description: Head Git ref (empty uses the selected workflow commit)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -12,3 +23,6 @@ jobs:
         uses: actions/checkout@v4
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v4
+        with:
+          base-ref: ${{ inputs.base_ref }}
+          head-ref: ${{ inputs.head_ref || github.sha }}
