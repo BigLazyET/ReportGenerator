@@ -16,4 +16,6 @@ The CoverageX adapter sets SourceDirs/SourcePathMappingAnchors and temporarily i
 
 Keep upstream format dispatch, EOF/DTD behavior, source readers, report builders and valid deployment/sample assets. `src/Readme.txt`, Deployment NuGet readmes and docs/resources reports are still packaged or used as fixtures; they are not dead CoverageX documentation.
 
+Maintained developer coverage uses the local dotnet-coverage tool pinned in `.config/dotnet-tools.json`; CI and `src/build.proj` consume its XML output. Coverlet dependencies and active collection scripts are removed. Existing producer-named XML fixtures and upstream format compatibility descriptions remain valid inputs, not supported collection integrations. Running this repository's own regression tests does not add user test-project orchestration to CoverageX.
+
 Focused checks are CoberturaParserTest, CoberturaIncrementalRegressionTest and CoverageReportParserTest, plus the consuming CoverageX tests. No NuGet/upstream release is implied by changes to this fork.

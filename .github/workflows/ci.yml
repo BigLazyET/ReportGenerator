@@ -75,12 +75,16 @@ jobs:
       working-directory: src/ReportGenerator.DotnetGlobalTool
 
     - name: Test
-      run: dotnet test src\ReportGenerator.Core.Test\ReportGenerator.Core.Test.csproj --configuration ${{ env.BuildConfiguration }} --no-build /p:CollectCoverage=true /p:DeterministicSourcePaths=true /p:IncludeTestAssembly=true /p:CoverletOutputFormat=opencover%2ccobertura /p:CoverletOutput=../target/reports/coverage/
+      run: |
+        New-Item -ItemType Directory -Force src/target/reports/coverage | Out-Null
+        dotnet tool restore
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        dotnet tool run dotnet-coverage collect --output-format xml --output src/target/reports/coverage/coverage.xml dotnet test src/ReportGenerator.Core.Test/ReportGenerator.Core.Test.csproj --configuration ${{ env.BuildConfiguration }} --no-build
 
     - name: ReportGenerator
       uses: danielpalme/ReportGenerator-GitHub-Action@v5
       with:
-        reports: 'src\target\reports\coverage\coverage.opencover.xml'
+        reports: 'src\target\reports\coverage\coverage.xml'
         targetdir: 'src\target\reports\coverage'
         reporttypes: 'HtmlInline_AzurePipelines;Cobertura;Badges;MarkdownSummaryGithub'
         assemblyfilters: '-xunit*'
