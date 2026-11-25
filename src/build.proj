@@ -66,12 +66,13 @@
 
   <Target Name="Test" DependsOnTargets="Clean; Compile">
     <MakeDir Directories="target\reports\coverage" />
-    <Exec Command="dotnet test --no-build ReportGenerator.Core.Test.csproj -c Release /p:CollectCoverage=true /p:DeterministicSourcePaths=true /p:IncludeTestAssembly=true /p:CoverletOutputFormat=\&quot;opencover,cobertura\&quot; /p:CoverletOutput=../target/reports/coverage/" WorkingDirectory="ReportGenerator.Core.Test" />
+    <Exec Command="dotnet tool restore" />
+    <Exec Command="dotnet tool run dotnet-coverage collect --output-format xml --output target/reports/coverage/coverage.xml dotnet test ReportGenerator.Core.Test/ReportGenerator.Core.Test.csproj --no-build -c Release" />
   </Target>
 
   <Target Name="Report" DependsOnTargets="Test">
     <ItemGroup>
-      <CoverageFiles Include="target\reports\coverage\coverage.opencover.xml" />
+      <CoverageFiles Include="target\reports\coverage\coverage.xml" />
     </ItemGroup>
 
     <ReportGenerator ReportFiles="@(CoverageFiles)" ReportTypes="Html;Badges" TargetDirectory="target\reports\coverage" AssemblyFilters="-Moq;-xunit*" HistoryDirectory="target\reports\coveragehistory" VerbosityLevel="Warning" />
